@@ -1,0 +1,22 @@
+
+# Kurulum: pip install -r requirements.txt
+# ============================================================
+
+# --- PDF Okuma ---
+pdfplumber==0.11.4
+
+# --- Metin Parçalama (Chunking) ---
+langchain-text-splitters==0.3.8
+
+# --- Vektör Veritabanı ---
+chromadb==0.6.3
+
+# --- Embedding Modeli (HuggingFace) ---
+langchain-huggingface==0.1.2
+sentence-transformers==3.4.1
+
+# --- LLM API ---
+groq>=0.9.0
+
+# --- Genel Yardımcılar ---
+python-dotenv==1.0.1

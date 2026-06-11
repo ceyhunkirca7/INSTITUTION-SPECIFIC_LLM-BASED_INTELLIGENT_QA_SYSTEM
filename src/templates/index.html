@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHaRM-AI — Cultural Heritage and Risk Management</title>
+  <meta name="description" content="CHaRM-AI: Kültürel miras ve afet risk yönetimi konularında uzmanlaşmış yapay zeka asistanı." />
+  <link rel="stylesheet" href="/static/style.css" />
+  <!-- Lucide ikonları (CDN) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       SOL SIDEBAR
+  ══════════════════════════════════════════════ -->
+  <aside id="sidebar" class="collapsed">
+
+    <!-- Logo + başlık -->
+    <div id="sidebar-header" role="button" aria-label="Sidebar aç/kapat" tabindex="0">
+      <img src="/static/logo.png" id="logo-img" alt="CHaRM-AI logo" />
+      <span class="sidebar-brand">CHaRM-AI</span>
+    </div>
+
+    <!-- Sohbetler bölümü -->
+    <div id="sidebar-body">
+      <div class="sidebar-section-title">
+        <i data-lucide="message-square"></i>
+        <span data-i18n="chat_history">Sohbetler</span>
+      </div>
+
+      <!-- Arama kutusu -->
+      <div class="search-box">
+        <i data-lucide="search"></i>
+        <input type="text" id="conv-search" data-i18n-placeholder="search_chat" placeholder="Sohbetlerde ara..." aria-label="Sohbetlerde ara" />
+      </div>
+
+      <!-- Sohbet listesi -->
+      <ul id="conv-list" aria-label="Geçmiş sohbetler"></ul>
+
+      <!-- Yeni sohbet butonu -->
+      <button id="new-chat-btn" class="new-chat-btn" aria-label="Yeni sohbet başlat">
+        <i data-lucide="plus"></i>
+        <span data-i18n="new_chat">Yeni Sohbet</span>
+      </button>
+    </div>
+
+    <!-- Ayarlar + Veritabanı -->
+    <div id="sidebar-footer">
+      <button id="db-btn" class="sidebar-footer-btn" aria-label="Veritabanı">
+        <i data-lucide="database"></i>
+        <span data-i18n="db_management">Veritabanı</span>
+      </button>
+      <button id="settings-btn" class="sidebar-footer-btn" aria-label="Ayarlar">
+        <i data-lucide="settings"></i>
+        <span data-i18n="settings">Ayarlar</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════════════════════════
+       ANA İÇERİK
+  ══════════════════════════════════════════════ -->
+  <main id="main-content">
+
+    <!-- Sağ üst köşe: bildirim + avatar -->
+    <div id="topbar-right">
+      <!-- Dil değiştirme butonu -->
+      <div class="topbar-btn-wrap">
+        <button id="lang-toggle-btn" class="topbar-btn" aria-label="Dili Değiştir" style="padding-left:10px; padding-right:10px;">
+          <i data-lucide="globe"></i>
+          <span id="current-lang-text" style="font-size: 13px; font-weight: 500; margin-left: 4px;">TR</span>
+          <i data-lucide="chevron-down" style="width:14px; height:14px; margin-left:2px;"></i>
+        </button>
+        <!-- Dil dropdown -->
+        <div id="lang-menu" class="dropdown-panel" hidden>
+          <button class="dropdown-item" id="lang-tr-btn">Türkçe (TR)</button>
+          <button class="dropdown-item" id="lang-en-btn">English (EN)</button>
+        </div>
+      </div>
+
+      <!-- Bildirim butonu -->
+      <div class="topbar-btn-wrap">
+        <button id="notif-btn" class="topbar-btn" aria-label="Bildirimler">
+          <i data-lucide="bell"></i>
+          <span class="notif-dot" id="notif-dot"></span>
+        </button>
+        <!-- Bildirim paneli -->
+        <div id="notif-panel" class="dropdown-panel" hidden>
+          <div class="dropdown-header">Bildirimler</div>
+          <div class="dropdown-empty">
+            <i data-lucide="bell-off"></i>
+            <span data-i18n="no_notif">Yeni bildirim yok</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Avatar + kullanıcı menüsü -->
+      <div class="topbar-btn-wrap">
+        <button id="avatar-btn" class="avatar-btn" aria-label="Kullanıcı profili">
+          <div class="avatar">M</div>
+          <i data-lucide="chevron-down" class="avatar-caret"></i>
+        </button>
+        <!-- Kullanıcı dropdown -->
+        <div id="user-menu" class="dropdown-panel" hidden>
+          <div class="dropdown-header">CHaRM-AI</div>
+          <button class="dropdown-item" id="dm-settings">
+            <i data-lucide="settings"></i> <span data-i18n="settings">Ayarlar</span>
+          </button>
+          <button class="dropdown-item" id="dm-export">
+            <i data-lucide="download"></i> <span data-i18n="export_chats">Sohbetleri Dışa Aktar</span>
+          </button>
+          <div class="dropdown-divider"></div>
+          <button class="dropdown-item danger" id="dm-clear-all">
+            <i data-lucide="trash-2"></i> <span data-i18n="delete_all_chats">Tüm Sohbetleri Sil</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WELCOME VIEW ────────────────────────────── -->
+    <section id="welcome-view">
+      <div id="welcome-center">
+        <h1 class="charm-title">CHaRM-AI</h1>
+        <p class="charm-subtitle">Cultural Heritage and Risk Management</p>
+
+        <!-- Composer (welcome) -->
+        <div class="composer-wrap" id="welcome-composer">
+          <div class="composer-inner">
+            <textarea
+              id="welcome-input"
+              class="composer-input"
+              data-i18n-placeholder="ask_charm"
+              placeholder="CHaRM'a sorun..."
+              rows="1"
+              aria-label="Soru yaz"
+            ></textarea>
+            <button class="send-btn" id="welcome-send" aria-label="Gönder">
+              <i data-lucide="send"></i>
+            </button>
+          </div>
+          <div class="composer-toolbar">
+            <button class="toolbar-btn mic-btn" id="welcome-mic" aria-label="Sesli soru sor" title="Sesli soru sor">
+              <i data-lucide="mic"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Suggestion chip -->
+        <div class="chips-row">
+          <button class="chip" data-text="What measures are prioritized for disaster risk management in World Heritage sites?">
+            + disaster risk management check circle
+          </button>
+        </div>
+
+        <!-- Important Notes Accordion -->
+        <div class="welcome-notes">
+          <button class="notes-toggle" id="notes-toggle">
+            <i data-lucide="info"></i> <span data-i18n="important_notes">Önemli Notlar</span>
+            <i data-lucide="chevron-down" class="notes-caret"></i>
+          </button>
+          <div class="notes-content" id="notes-content" hidden>
+            <ul>
+              <li><span data-i18n="note_1">Bu yapay zeka sadece sisteme yüklenmiş ilgili belgelerden cevap verir. Sistemdeki PDF'leri görmek için</span> <a href="#" id="note-db-link" data-i18n="note_1_link">buraya tıklayın</a>.</li>
+              <li data-i18n="note_2">İlk soruyu sorarken devasa modellerin belleğe yüklenmesi 1-2 dakika sürebilir, lütfen bekleyiniz.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CHAT VIEW ────────────────────────────────── -->
+    <section id="chat-view" hidden>
+
+      <!-- Başlık bar (SCR-03 üst kısmı) -->
+      <header id="chat-header">
+        <h2 class="charm-title">CHaRM-AI</h2>
+        <p class="charm-subtitle">Cultural Heritage and Risk Management</p>
+      </header>
+
+      <!-- Chat kartı (büyük beyaz rounded alan) -->
+      <div id="chat-card">
+        <div id="messages" aria-live="polite" aria-label="Sohbet mesajları"></div>
+      </div>
+
+      <!-- Composer (chat) -->
+      <div class="composer-wrap" id="chat-composer">
+        <div class="composer-inner">
+          <textarea
+            id="chat-input"
+            class="composer-input"
+            data-i18n-placeholder="ask_charm"
+            placeholder="CHaRM'a sorun..."
+            rows="1"
+            aria-label="Soru yaz"
+          ></textarea>
+          <button class="send-btn" id="chat-send" aria-label="Gönder">
+            <i data-lucide="send"></i>
+          </button>
+        </div>
+        <div class="composer-toolbar">
+          <button class="toolbar-btn mic-btn" id="chat-mic" aria-label="Sesli soru sor" title="Sesli soru sor">
+            <i data-lucide="mic"></i>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════════════
+       VERİTABANI MODALİ
+  ══════════════════════════════════════════════ -->
+  <div id="db-overlay" class="modal-overlay" hidden>
+    <div id="db-modal" role="dialog" aria-labelledby="db-title" aria-modal="true">
+
+      <div class="modal-header">
+        <h2 id="db-title" data-i18n="db_management">Veritabanı Yönetimi</h2>
+        <button id="db-close" class="modal-close" aria-label="Kapat">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Ü st kısım: sayac + upload -->
+        <section class="settings-section">
+          <h3 class="settings-section-title" data-i18n="upload_pdf">PDF Yükle</h3>
+
+          <!-- Drag & Drop alanı -->
+          <div id="drop-zone">
+            <i data-lucide="upload-cloud"></i>
+            <p data-i18n="drag_drop">PDF dosyalarını sürükle bırak ya da seç</p>
+            <small data-i18n="max_5gb">PDF, DOCX &middot; Maks 5 GB</small>
+            <input type="file" id="file-input" accept=".pdf,.docx,.doc" multiple hidden />
+            <button class="settings-action-btn" id="file-pick-btn" style="margin-top:10px;">
+              <i data-lucide="folder-open"></i> <span data-i18n="choose_file">Dosya Seç</span>
+            </button>
+          </div>
+
+          <!-- İlerleme çubuğu -->
+          <div id="ingest-progress" hidden>
+            <div class="progress-header">
+              <span id="progress-label" data-i18n="preparing">Hazırlanıyor...</span>
+              <span id="progress-count">0 / 0</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div id="progress-bar"></div>
+            </div>
+            <p id="progress-file" class="progress-file-name"></p>
+          </div>
+        </section>
+
+        <!-- Alt kısım: mevcut dosya listesi -->
+        <section class="settings-section" style="flex:1; display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <h3 class="settings-section-title" style="margin-bottom:0;" data-i18n="db_files">Veritabanındaki Dosyalar</h3>
+            <span id="doc-count-badge" class="doc-count-badge">yükleniyor...</span>
+          </div>
+
+          <!-- Arama -->
+          <div class="search-box" style="opacity:1; max-height:44px;">
+            <i data-lucide="search"></i>
+            <input type="text" id="doc-search" data-i18n-placeholder="search_file" placeholder="Dosya ara..." autocomplete="off" />
+          </div>
+
+          <!-- Liste -->
+          <ul id="doc-list"></ul>
+
+          <!-- Sayfalama -->
+          <div id="doc-pagination" class="doc-pagination"></div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       AYARLAR MODALI
+  ══════════════════════════════════════════════ -->
+  <div id="settings-overlay" class="modal-overlay" hidden>
+    <div id="settings-modal" role="dialog" aria-labelledby="settings-title" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="settings-title" data-i18n="settings">Ayarlar</h2>
+        <button id="settings-close" class="modal-close" aria-label="Kapat">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Görünüm -->
+        <section class="settings-section">
+          <h3 class="settings-section-title" data-i18n="appearance">Görünüm</h3>
+
+          <div class="settings-row">
+            <div class="settings-label">
+              <span data-i18n="dark_mode">Karanlık Mod</span>
+              <small data-i18n="dark_mode_desc">Koyu renk temasına geç</small>
+            </div>
+            <label class="toggle" aria-label="Karanlık mod">
+              <input type="checkbox" id="dark-mode-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Sohbetler -->
+        <section class="settings-section">
+          <h3 class="settings-section-title" data-i18n="chats">Sohbetler</h3>
+
+          <div class="settings-row">
+            <div class="settings-label">
+              <span data-i18n="manage_archive">Arşivlenmiş Sohbetleri Yönet</span>
+              <small data-i18n="manage_archive_desc">Arşivdeki sohbetleri gör, geri al veya sil</small>
+            </div>
+            <button class="settings-action-btn" id="manage-archive-btn">
+              <span data-i18n="manage">Yönet</span> <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-label">
+              <span data-i18n="export_chats">Sohbetleri Dışa Aktar</span>
+              <small data-i18n="export_desc">Tüm sohbet geçmişini JSON olarak indir</small>
+            </div>
+            <button class="settings-action-btn" id="export-btn">
+              <i data-lucide="download"></i> <span data-i18n="download">İndir</span>
+            </button>
+          </div>
+
+          <div class="settings-row">
+            <div class="settings-label">
+              <span data-i18n="archive_all">Tüm Sohbetleri Arşivle</span>
+              <small data-i18n="archive_desc">Sohbetleri gizle ama silme</small>
+            </div>
+            <button class="settings-action-btn" id="archive-btn">
+              <i data-lucide="archive"></i> <span data-i18n="archive">Arşivle</span>
+            </button>
+          </div>
+
+          <div class="settings-row danger-row">
+            <div class="settings-label">
+              <span class="danger-text" data-i18n="delete_all_chats">Tüm Sohbetleri Sil</span>
+              <small data-i18n="delete_desc">Bu işlem geri alınamaz</small>
+            </div>
+            <button class="settings-action-btn danger" id="clear-all-btn">
+              <i data-lucide="trash-2"></i> <span data-i18n="delete">Sil</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Hakkında -->
+        <section class="settings-section">
+          <h3 class="settings-section-title" data-i18n="about">Hakkında</h3>
+          <div class="settings-info">
+            <p><strong>CHaRM-AI</strong> v1.0</p>
+            <p>Cultural Heritage and Risk Management</p>
+            <p style="margin-top:6px; color:var(--text-muted); font-size:12px;" data-i18n="about_desc">Mimari miras koruma ve afet risk yönetimi alanında uzmanlaşmış RAG tabanlı yapay zeka asistanı.</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Onay diyaloğu (silme işlemi için) -->
+  <div id="confirm-overlay" class="modal-overlay" hidden>
+    <div id="confirm-modal" role="alertdialog" aria-modal="true">
+      <div class="confirm-icon"><i data-lucide="alert-triangle"></i></div>
+      <h3 id="confirm-title" data-i18n="are_you_sure">Emin misiniz?</h3>
+      <p id="confirm-desc"></p>
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="confirm-btn secondary" data-i18n="cancel">İptal</button>
+        <button id="confirm-ok" class="confirm-btn danger" data-i18n="delete">Sil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       ARŞİV MODALI
+  ══════════════════════════════════════════════ -->
+  <div id="archive-overlay" class="modal-overlay" hidden>
+    <div id="archive-modal" role="dialog" aria-labelledby="archive-title" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="archive-title" data-i18n="archived_chats">Arşivlenmiş Sohbetler</h2>
+        <button id="archive-close" class="modal-close" aria-label="Kapat">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <ul id="archive-list" style="list-style:none; padding:10px; margin:0; max-height:400px; overflow-y:auto;">
+          <!-- JS ile doldurulacak -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

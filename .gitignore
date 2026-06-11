@@ -1,0 +1,25 @@
+# Veritabanları ve Veri Klasörleri
+chroma_db/
+data/
+datasets/
+results/
+*.pdf
+*.docx
+
+# Ortam Değişkenleri (API Key'ler GİZLİ KALMALI!)
+.env
+
+# Sanal Ortamlar ve Önbellekler
+venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Değerlendirme Çıktıları ve Geçici Dosyalar
+*.xlsx
+*.json
+*.log
+*.txt
+*.pptx
+!requirements.txt
