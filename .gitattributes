@@ -1,2 +1,5 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# GitHub dil istatistiklerinde arayuz (veya JS) dosyalarını yoksayması için
+arayuz/** linguist-vendored
+*.js linguist-vendored
+*.html linguist-vendored
+*.css linguist-vendored
