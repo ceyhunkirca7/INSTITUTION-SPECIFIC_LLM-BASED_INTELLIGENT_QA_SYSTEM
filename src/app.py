@@ -9,6 +9,9 @@ import threading
 from flask import Flask, request, jsonify, render_template, Response, stream_with_context, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+import requests
+import re
+from urllib.parse import urlparse
 
 # rag_engine.py'nin bulunduğu klasörü path'e ekle
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -54,6 +57,7 @@ def run_ingest_background(specific_files=None):
         _ingest_status.update({
             "running": True, "done": False, "error": None,
             "current": 0, "total": 0, "current_file": "", "added": 0,
+            "current_chunk": 0, "total_chunks": 0
         })
 
     try:
@@ -89,15 +93,25 @@ def run_ingest_background(specific_files=None):
             with _ingest_lock:
                 _ingest_status["current"]      = idx
                 _ingest_status["current_file"] = fname
+                _ingest_status["current_chunk"] = 0
+                _ingest_status["total_chunks"] = 0
 
             pages = processor.extract_text(file_path)
             if not pages:
                 continue
 
             chunks = processor.split_documents(pages)
+            
+            with _ingest_lock:
+                _ingest_status["total_chunks"] = len(chunks)
+                _ingest_status["current_chunk"] = 0
+                
             for batch_start in range(0, len(chunks), BATCH_SIZE):
                 batch = chunks[batch_start: batch_start + BATCH_SIZE]
                 store.add_chunks(batch)
+                
+                with _ingest_lock:
+                    _ingest_status["current_chunk"] += len(batch)
 
             with open(LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(fname + "\n")
@@ -154,13 +168,14 @@ def index():
 def chat():
     data    = request.get_json(force=True)
     message = (data.get("message") or "").strip()
+    model   = data.get("model") or None  # UI'dan seçilen model
     if not message:
         return jsonify({"error": "Mesaj boş olamaz."}), 400
 
     def generate():
         try:
             from rag_engine import ask
-            result  = ask(message)
+            result  = ask(message, model=model)
             answer  = result.get("answer", "")
             sources = result.get("sources", [])
 
@@ -237,6 +252,51 @@ def list_documents():
         "docs":     paginated,
     })
 
+@app.route("/api/documents/<path:filename>", methods=["DELETE"])
+def delete_document(filename):
+    """Belirtilen dosyayı diskten, ChromaDB'den ve log'dan siler."""
+    import chromadb
+
+    # 1. Güvenlik: path traversal koruması
+    safe_name = os.path.basename(filename)
+    if not safe_name:
+        return jsonify({"error": "Geçersiz dosya adı."}), 400
+
+    # 2. Dosyayı diskten bul ve sil (alt klasörler dahil)
+    deleted_file = False
+    for dirpath, _, filenames in os.walk(DATA_DIR):
+        if safe_name in filenames:
+            try:
+                os.remove(os.path.join(dirpath, safe_name))
+                deleted_file = True
+            except OSError as e:
+                return jsonify({"error": f"Dosya silinemedi: {e}"}), 500
+            break
+
+    # 3. ChromaDB'den ilgili chunk'ları sil
+    try:
+        chroma_path = os.path.join(BASE_DIR, "chroma_db")
+        client      = chromadb.PersistentClient(path=chroma_path)
+        collection  = client.get_or_create_collection(name="architecture_docs")
+        results     = collection.get(where={"source": safe_name})
+        if results["ids"]:
+            collection.delete(ids=results["ids"])
+    except Exception as e:
+        # ChromaDB hatası olsa bile log'dan sil ve devam et
+        pass
+
+    # 4. Log dosyasından satırı kaldır
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
+            for line in lines:
+                if line.strip() != safe_name:
+                    f.write(line)
+
+    return jsonify({"ok": True, "deleted": safe_name})
+
+
 
 @app.route("/api/upload", methods=["POST"])
 def upload_file():
@@ -274,12 +334,129 @@ def upload_file():
         "skipped": skipped,
     })
 
+@app.route("/api/upload-url", methods=["POST"])
+def upload_url():
+    """Verilen URL'den PDF indirir ve ingest'i tetikler."""
+    data = request.get_json(force=True)
+    if not data or "url" not in data:
+        return jsonify({"error": "URL bulunamadı."}), 400
+
+    url = data["url"].strip()
+    if not url.startswith("http"):
+        url = "https://" + url
+
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        r = requests.get(url, stream=True, timeout=30, headers=headers)
+        r.raise_for_status()
+
+        content_type = r.headers.get("Content-Type", "")
+        # UNESCO belgelerinde genellikle "application/pdf" döner
+        if "pdf" not in content_type.lower() and "document" not in content_type.lower():
+            return jsonify({"error": f"Geçersiz dosya tipi ({content_type}). Sadece PDF/DOCX desteklenir."}), 400
+
+        # Dosya adını belirle
+        filename = None
+        cd = r.headers.get("Content-Disposition")
+        if cd:
+            match = re.search(r'filename="?([^"]+)"?', cd)
+            if match:
+                filename = match.group(1)
+        
+        if not filename:
+            parsed = urlparse(url)
+            basename = os.path.basename(parsed.path)
+            if basename:
+                filename = basename
+                if not filename.lower().endswith(".pdf"):
+                    filename += ".pdf"
+            else:
+                filename = "downloaded_document.pdf"
+                
+        safe_name = secure_filename(filename)
+        if not safe_name:
+            safe_name = "downloaded_document.pdf"
+            
+        os.makedirs(DATA_DIR, exist_ok=True)
+        dest = os.path.join(DATA_DIR, safe_name)
+        
+        with open(dest, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+                    
+        # Ingestion başlat
+        if not _ingest_status["running"]:
+            t = threading.Thread(target=run_ingest_background, args=([dest],), daemon=True)
+            t.start()
+            
+        return jsonify({"ok": True, "saved": [safe_name]})
+
+    except Exception as e:
+        return jsonify({"error": f"İndirme hatası: {str(e)}"}), 500
+
 
 @app.route("/api/ingest-status", methods=["GET"])
 def ingest_status_route():
     """Anlık ingest durumu (frontend polling için)."""
     with _ingest_lock:
         return jsonify(dict(_ingest_status))
+
+
+@app.route("/api/rag-config", methods=["GET"])
+def get_rag_config():
+    """Mevcut RAG konfigürasyonunu döndürür."""
+    import rag_engine
+    return jsonify({
+        "use_reranker":    rag_engine.USE_RERANKER,
+        "reranker_model":  rag_engine.RERANKER_MODEL,
+        "initial_top_k":  rag_engine.INITIAL_TOP_K,
+        "top_k":          rag_engine.TOP_K,
+        "temperature":    rag_engine.TEMPERATURE,
+        "score_threshold": rag_engine.SCORE_THRESHOLD,
+    })
+
+
+@app.route("/api/rag-config", methods=["POST"])
+def set_rag_config():
+    """RAG parametrelerini runtime'da günceller."""
+    import rag_engine
+    data = request.get_json(force=True)
+
+    if "use_reranker" in data:
+        val = bool(data["use_reranker"])
+        rag_engine.USE_RERANKER = val
+        # Reranker değişince threshold da güncelle
+        rag_engine.SCORE_THRESHOLD = -2.0 if val else 0.50
+
+    if "reranker_model" in data:
+        new_model = str(data["reranker_model"])
+        if new_model != rag_engine.RERANKER_MODEL:
+            rag_engine.RERANKER_MODEL = new_model
+            rag_engine._reranker_instance = None # Modeli hafızadan sil ki bir dahakine yenisi yüklensin
+
+    if "initial_top_k" in data:
+        v = int(data["initial_top_k"])
+        if 5 <= v <= 200:
+            rag_engine.INITIAL_TOP_K = v
+
+    if "top_k" in data:
+        v = int(data["top_k"])
+        if 1 <= v <= 50:
+            rag_engine.TOP_K = v
+
+    if "temperature" in data:
+        v = float(data["temperature"])
+        if 0.0 <= v <= 2.0:
+            rag_engine.TEMPERATURE = v
+
+    if "score_threshold" in data:
+        v = float(data["score_threshold"])
+        rag_engine.SCORE_THRESHOLD = v
+
+    return jsonify({"ok": True})
 
 
 # ── Entry Point ───────────────────────────────────────────────────────────────

@@ -19,10 +19,11 @@ from dotenv import load_dotenv
 print(">>> [2/3] Ragas ve HuggingFace kütüphaneleri (PyTorch) belleğe alınıyor... (Bu işlem 1-2 dakika sürebilir)")
 from datasets import Dataset
 from ragas import evaluate
+from ragas.run_config import RunConfig
 from ragas.metrics import (
     faithfulness,
     answer_relevancy,
-    context_precision,
+    context_precision
 )
 
 from langchain_openai import ChatOpenAI
@@ -71,29 +72,42 @@ def main():
     print(f"1. Veri seti okunuyor: {dataset_path}")
     df = pd.read_excel(dataset_path)
     
-    required_cols = {"question", "answer"}
+    # Eğer ilk satırda "question" başlığı yoksa, muhtemelen başlık satırı unutulmuştur
+    if "question" not in df.columns:
+        # Başlık yokmuş gibi en baştan oku, ilk sütunu "question" yap
+        df = pd.read_excel(dataset_path, header=None)
+        df.rename(columns={0: "question"}, inplace=True)
+
+    required_cols = {"question"}
     if not required_cols.issubset(df.columns):
-        print(f"HATA: Excel dosyasında 'question' ve 'answer' sütunları bulunmalı.")
+        print(f"HATA: Excel dosyasında 'question' sütunu bulunmalı.")
         print(f"   Bulunan sütunlar: {list(df.columns)}")
         return
 
-    print(f"   Toplam {len(df)} soru-cevap çifti bulundu.")
+    print(f"   Toplam {len(df)} soru bulundu.")
     test_df = df.copy()
 
     questions      = []
-    ground_truths  = []
     answers        = []
     contexts_list  = []
+    references     = []
 
-    print("\n2. RAG sisteminden cevaplar toplanıyor...")
+    # Groq ücretsiz tier: 6000 TPM limiti
+    # Her chunk ~200 token → K*200 token/istek
+    # Dakikada güvenli istek sayısı: 6000 / (K*200) = 30/K
+    # Güvenli bekleme: 60 / (30/K) = 2*K saniye → ama çok fazla olur
+    # Pratik formül: max(2, K * 0.8) saniye bekleme
+    from rag_engine import TOP_K as _TOP_K
+    _sleep_secs = max(2, int(_TOP_K * 0.8))
+
+    print(f"\n2. RAG sisteminden cevaplar toplanıyor... (sorular arası bekleme: {_sleep_secs}sn)")
     for idx, row in test_df.iterrows():
         q  = str(row["question"]).strip()
-        gt = str(row["answer"]).strip()
         print(f"  [{idx+1}/{len(test_df)}] {q[:60]}...")
 
         try:
             result = ask(q)
-            time.sleep(2)   # Groq rate limit için
+            time.sleep(_sleep_secs)   # Groq rate limit için (K'ya göre dinamik)
         except Exception as api_err:
             print(f"    -> [DİKKAT] Groq API Hatası: {api_err}")
             print("    -> 30 saniye bekleniyor (rate limit)...")
@@ -114,9 +128,12 @@ def main():
             ctx_list = ["No context found"]
 
         questions.append(q)
-        ground_truths.append(gt)
         answers.append(result.get("answer", ""))
         contexts_list.append(ctx_list)
+        
+        # context_precision metriği referans cevaba (ground truth) ihtiyaç duyar
+        ref_ans = str(row.get("answer", "")) if "answer" in row else ""
+        references.append(ref_ans)
 
     if not questions:
         print("\n[HATA] Hiçbir soru işlenemedi. Değerlendirme iptal ediliyor.")
@@ -127,7 +144,7 @@ def main():
         "question":     questions,
         "answer":       answers,
         "contexts":     contexts_list,
-        "ground_truth": ground_truths,
+        "reference":    references,
     }
     dataset = Dataset.from_dict(data_dict)
     print(f"\n3. {len(questions)} soru için RAGAS judge modeli yükleniyor...")
@@ -144,6 +161,8 @@ def main():
             metrics=[faithfulness, answer_relevancy, context_precision],
             llm=judge_llm,
             embeddings=judge_embeddings,
+            raise_exceptions=False,  # Timeout olan job’u atla, NaN bırak, devam et
+            run_config=RunConfig(max_workers=1)  # Tek tek işle, timeout/rate limit'i önle
         )
 
         print("\n" + "=" * 60)
@@ -159,22 +178,52 @@ def main():
             if col in results_df.columns:
                 results_df = results_df.drop(columns=[col])
 
+        # NaN olanları 0 olarak doldur (timeout yiyenler)
+        metric_cols = ["faithfulness", "answer_relevancy", "context_precision"]
+        metric_cols = [c for c in metric_cols if c in results_df.columns]
+        still_nan = results_df[metric_cols].isnull().any(axis=1).sum()
+        if still_nan > 0:
+            print(f"\n[UYARI] {still_nan} satırda NaN değer tespit edildi. Bunlar 0 olarak işaretleniyor.")
+            results_df[metric_cols] = results_df[metric_cols].fillna(0)
+
         print("\nİLK 5 SORUNUN BİREYSEL SKORLARI:")
         print(results_df.head(5).to_string())
 
-        from rag_engine import LLM_MODEL, TOP_K, SCORE_THRESHOLD
+        from rag_engine import LLM_MODEL, TOP_K, SCORE_THRESHOLD, USE_RERANKER, INITIAL_TOP_K, TEMPERATURE
         import datetime
         safe_model_name = LLM_MODEL.replace("/", "-")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-        filename = f"ragas_results_reranker_{safe_model_name}_k{TOP_K}_t{SCORE_THRESHOLD}_{timestamp}.xlsx"
+        
+        k_str = f"k{INITIAL_TOP_K}_{TOP_K}" if USE_RERANKER else f"k{TOP_K}"
+        filename = f"final_ragas_lastprompt_tmp{TEMPERATURE}_{safe_model_name}_{k_str}_t{SCORE_THRESHOLD}_{timestamp}.xlsx"
+        
         output_file = os.path.join(PROJECT_ROOT, filename)
         
+        # Her bir metriğin ortalamasını hesapla ve en alta "Ortalama" satırı olarak ekle
+        # NaN değerler 0 sayılır → toplam soru sayısına (N) bölünür, adaletli ortalama
+        total_questions = len(results_df)
+        nan_counts = {col: results_df[col].isna().sum() for col in metric_cols if col in results_df.columns}
+
+        numeric_cols = results_df.select_dtypes(include=['number']).columns
+        avg_row = {col: "" for col in results_df.columns}
+        if "question" in results_df.columns:
+            nan_report = ", ".join([f"{c}: {n} NaN" for c, n in nan_counts.items() if n > 0])
+            avg_row["question"] = f"ORTALAMA ({total_questions} soru)" + (f" [{nan_report}→0 sayıldı]" if nan_report else "")
+
+        for col in numeric_cols:
+            # fillna(0): NaN'ı 0 yap, sonra mean() → toplam N'e böler
+            avg_row[col] = results_df[col].fillna(0).mean()
+
+        results_df = pd.concat([results_df, pd.DataFrame([avg_row])], ignore_index=True)
+
+
         results_df.to_excel(output_file, index=False)
-        print(f"\nDetaylı sonuçlar kaydedildi: {output_file}")
+        print(f"\nDetaylı sonuçlar ve ortalamalar kaydedildi: {output_file}")
     except Exception as e:
         import traceback
         print("\n[HATA] RAGAS değerlendirmesi sırasında bir hata oluştu:")
         traceback.print_exc()
+
 
 
 if __name__ == "__main__":
