@@ -8,6 +8,15 @@
 ════════════════════════════════════════════ */
 const i18n = {
   tr: {
+    important_notes: "Önemli Notlar",
+    note_1: "Bu yapay zeka sadece sisteme yüklenmiş ilgili belgelerden cevap verir. Sistemdeki PDF'leri görmek için",
+    note_1_link: "buraya tıklayın",
+    note_2: "<u>Sadece ilk soruda</u> devasa modellerin belleğe yüklenmesi 1-2 dakika sürebilir, lütfen bekleyiniz.",
+    note_3: "Metrikleri değiştirmek için sağ üstteki filtreleme simgesine tıklayın.",
+    note_4: "Gelişmiş ayarlar (RAG Settings) menüsünden 'Reranker' özelliğini açmak yapay zekanın belge bulma başarısını artırır.",
+    note_5: "Hafif (Light) Reranker daha hızlıdır (5-10 sn), Ağır (Heavy) Reranker ise daha nokta atışı bulur ama yavaştır (15-20 sn). Uyarı: Ağır Reranker için en az 16GB RAM önerilir, aksi halde sistem yetersiz bellek nedeniyle çökebilir.",
+    note_6: "Veritabanı menüsünden direkt olarak UNESCO vb. PDF linklerini (URL) yapıştırarak sisteme saniyeler içinde yeni kaynak ekleyebilirsiniz.",
+    example_questions: "Örnek Sorular",
     chat_history: "Sohbetler",
     search_chat: "Sohbetlerde ara...",
     new_chat: "Yeni Sohbet",
@@ -43,17 +52,24 @@ const i18n = {
     manage_archive_desc: "Arşivdeki sohbetleri gör, geri al veya sil",
     manage: "Yönet",
     archived_chats: "Arşivlenmiş Sohbetler",
-    important_notes: "Önemli Notlar",
-    note_1: "Bu yapay zeka sadece sisteme yüklenmiş ilgili belgelerden cevap verir. Sistemdeki PDF'leri görmek için",
-    note_1_link: "buraya tıklayın",
-    note_2: "İlk soruyu sorarken devasa modellerin belleğe yüklenmesi 1-2 dakika sürebilir, lütfen bekleyiniz.",
+    reranker_disabled: "Kapalı",
+    reranker_heavy: "BGE-v2-m3 (Ağır)",
+    reranker_light: "MiniLM-L6 (Hafif)",
+    top_k_llm: "Top K <span class=\"config-hint\">(LLM'e giden)</span>",
+    initial_top_k_hint: "(Sadece Rerank modunda işlevli)",
+    paste_url_placeholder: "PDF Linki Yapıştır (Örn: https://whc.unesco.org/...)",
+    upload_url_btn: "Linkten Yükle",
+    upload_warning: "Bu işlem normal bir dosya yüklemesi değildir. Dosyalar yapay zeka için yüzlerce parçaya (chunk) bölünür ve matematiksel vektörleri hesaplanır. Dosya boyutuna göre uzun sürebilir.",
     dynamic: {
       voice_not_supported: "Tarayıcınız sesli girişi desteklemiyor (Chrome/Edge kullanın)",
       upload_failed: "Yükleme başarısız",
       files_uploaded: "dosya yüklendi, işleme başladı.",
       processing: "İşleniyor...",
-      models_preparing: "Modeller hazırlanıyor...",
-      files_added: "dosya başarıyla işlendi ve eklendi",
+      models_preparing: "Yapay zeka modelleri belleğe yükleniyor...",
+      files_added: "dosya eklendi",
+      file_label: "Dosya",
+      chunk_label: "Parça",
+      yes: "Evet",
       no_results: "Sonuç bulunamadı",
       list_failed: "Liste yüklenemedi.",
       delete_chat_confirm: "Bu sohbeti silmek istediğine emin misin?",
@@ -67,10 +83,34 @@ const i18n = {
       restore: "Geri Al",
       delete_permanently: "Kalıcı Sil",
       restored_success: "Sohbet başarıyla geri yüklendi!",
-      no_archived_chats: "Arşivlenmiş sohbet bulunmuyor."
+      no_archived_chats: "Arşivlenmiş sohbet bulunmuyor.",
+      delete_doc_title: "Dosyayı Sil",
+      delete_doc_confirm: "dosyasını veritabanından silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+      delete_doc_btn: "Sil",
+      delete_doc_error: "Silme hatası:",
+      delete_doc_conn_error: "Sunucuya ulaşılamadı.",
+      sources_label: "kaynak",
+      sources_hide: "Kaynakları gizle",
+      page: "Sayfa",
+      unknown_source: "Bilinmeyen Kaynak",
+      time_now: "şimdi",
+      time_min: "dk",
+      time_hr: "sa",
+      time_day: "g",
+      sources_used: "Kullanılan Kaynaklar",
+      sources_additional: "Getirilen Ek Bağlam"
     }
   },
   en: {
+    important_notes: "Important Notes",
+    note_1: "This AI only answers from relevant documents uploaded to the system. To view the PDFs in the system,",
+    note_1_link: "click here",
+    note_2: "Loading massive models into memory during the <u>only first question</u> may take 1-2 minutes, please wait.",
+    note_3: "To change metrics, click the filter icon on the top right.",
+    note_4: "Enabling the 'Reranker' feature from the RAG Settings menu increases the AI's success in finding the right documents.",
+    note_5: "The Light Reranker is faster (5-10 sec), while the Heavy Reranker is more precise but slower (15-20 sec). Warning: At least 16GB RAM is recommended for the Heavy Reranker, otherwise the system may crash due to insufficient memory.",
+    note_6: "You can quickly add new sources to the system in seconds by pasting UNESCO or similar PDF links directly into the Database menu.",
+    example_questions: "Example Questions",
     chat_history: "Chats",
     search_chat: "Search chats...",
     new_chat: "New Chat",
@@ -106,17 +146,24 @@ const i18n = {
     manage_archive_desc: "View, restore or delete archived chats",
     manage: "Manage",
     archived_chats: "Archived Chats",
-    important_notes: "Important Notes",
-    note_1: "This AI only answers based on the relevant uploaded documents. To see the PDFs in the system,",
-    note_1_link: "click here",
-    note_2: "When asking the first question, loading the massive models into memory may take 1-2 minutes, please wait.",
+    reranker_disabled: "Disabled",
+    reranker_heavy: "BGE-v2-m3 (Heavy)",
+    reranker_light: "MiniLM-L6 (Light)",
+    top_k_llm: "Top K <span class=\"config-hint\">(To LLM)</span>",
+    initial_top_k_hint: "(Only active in Rerank mode)",
+    paste_url_placeholder: "Paste PDF Link (e.g., https://whc.unesco.org/...)",
+    upload_url_btn: "Upload from Link",
+    upload_warning: "This is not a regular file upload. Documents are split into hundreds of chunks and mathematical vectors are calculated. This process may take a while depending on file size.",
     dynamic: {
       voice_not_supported: "Your browser does not support voice input (use Chrome/Edge)",
       upload_failed: "Upload failed",
       files_uploaded: "file(s) uploaded, processing started.",
       processing: "Processing...",
-      models_preparing: "Preparing models...",
-      files_added: "file(s) successfully processed and added",
+      models_preparing: "AI models are loading into memory...",
+      files_added: "files added",
+      file_label: "File",
+      chunk_label: "Chunk",
+      yes: "Yes",
       no_results: "No results found",
       list_failed: "Failed to load list.",
       delete_chat_confirm: "Are you sure you want to delete this chat?",
@@ -130,7 +177,22 @@ const i18n = {
       restore: "Restore",
       delete_permanently: "Delete",
       restored_success: "Chat restored successfully!",
-      no_archived_chats: "No archived chats found."
+      no_archived_chats: "No archived chats found.",
+      delete_doc_title: "Delete File",
+      delete_doc_confirm: "Are you sure you want to remove this file from the database? This action cannot be undone.",
+      delete_doc_btn: "Delete",
+      delete_doc_error: "Delete error:",
+      delete_doc_conn_error: "Could not reach the server.",
+      sources_label: "source(s)",
+      sources_hide: "Hide sources",
+      page: "Page",
+      unknown_source: "Unknown Source",
+      time_now: "now",
+      time_min: "m",
+      time_hr: "h",
+      time_day: "d",
+      sources_used: "Sources Used",
+      sources_additional: "Additional Retrieved Context"
     }
   }
 };
@@ -187,38 +249,14 @@ const chatInput     = document.getElementById('chat-input');
 const chatSend      = document.getElementById('chat-send');
 const messagesEl    = document.getElementById('messages');
 
-const notesToggle   = document.getElementById('notes-toggle');
-const notesContent  = document.getElementById('notes-content');
-const noteDbLink    = document.getElementById('note-db-link');
-
 /* ════════════════════════════════════════════
-   SIDEBAR & NOTES
+   SIDEBAR
 ════════════════════════════════════════════ */
 sidebarHeader.addEventListener('click', toggleSidebar);
 sidebarHeader.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') toggleSidebar(); });
 
 function toggleSidebar() {
   sidebar.classList.toggle('expanded');
-}
-
-// Önemli Notlar Accordion
-if (notesToggle && notesContent) {
-  notesToggle.addEventListener('click', () => {
-    notesToggle.classList.toggle('open');
-    if (notesContent.hasAttribute('hidden')) {
-      notesContent.removeAttribute('hidden');
-    } else {
-      notesContent.setAttribute('hidden', '');
-    }
-  });
-}
-
-// DB Link in Notes
-if (noteDbLink) {
-  noteDbLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    openDbModal();
-  });
 }
 
 // ESC tuşu ile sidebar kapatma (tablet/mobile)
@@ -367,6 +405,9 @@ function archiveConversation(id) {
 function showChatView() {
   welcomeView.style.display = 'none';
   chatView.removeAttribute('hidden');
+  // Yeni bir sohbete geçerken kilitleri kaldır
+  isLoading = false;
+  if (typeof setInputsDisabled === 'function') setInputsDisabled(false);
 }
 
 function showWelcomeView() {
@@ -374,7 +415,42 @@ function showWelcomeView() {
   chatView.setAttribute('hidden', '');
   activeConvId = null;
   messagesEl.innerHTML = '';
+  
+  // Arayüz sıfırlanırken tüm input kilitlerini aç ve temizle
+  isLoading = false;
+  if (typeof setInputsDisabled === 'function') setInputsDisabled(false);
+  welcomeInput.value = '';
+  chatInput.value = '';
+  if (typeof autoResize === 'function') {
+    autoResize(welcomeInput);
+    autoResize(chatInput);
+  }
 }
+
+// Model seçicileri senkronize et — biri değişince diğeri de güncellenir
+(function() {
+  const selW = document.getElementById('model-selector-welcome');
+  const selC = document.getElementById('model-selector-chat');
+  if (!selW || !selC) return;
+  selW.addEventListener('change', () => { selC.value = selW.value; });
+  selC.addEventListener('change', () => { selW.value = selC.value; });
+})();
+
+// Geçerli model ID'leri — eski/deprecated değerleri sıfırla
+(function validateModelSelectors() {
+  const VALID_MODELS = [
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
+    'qwen/qwen3-32b'
+  ];
+  ['model-selector-welcome', 'model-selector-chat'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    if (!VALID_MODELS.includes(sel.value)) {
+      sel.value = 'llama-3.1-8b-instant';
+    }
+  });
+})();
 
 /* ════════════════════════════════════════════
    MESAJ GÖNDERME
@@ -409,12 +485,17 @@ async function sendMessage(text) {
   // SSE stream'i dinle
   let aiText    = '';
   let aiSources = [];
+  const _reqStart = Date.now(); // ← zamanlayıcı başlat
 
   try {
+    const selW  = document.getElementById('model-selector-welcome');
+    const selC  = document.getElementById('model-selector-chat');
+    const selectedModel = (selC && !selC.closest('[hidden]') ? selC : selW)?.value || 'llama-3.1-8b-instant';
+
     const resp = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text })
+      body: JSON.stringify({ message: text, model: selectedModel })
     });
 
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -443,20 +524,30 @@ async function sendMessage(text) {
 
           if (data.type === 'token') {
             aiText += data.content;
-            bubbleText.textContent = aiText;
+            bubbleText.innerHTML = formatMessageContent(aiText, aiSources);
             scrollToBottom();
 
           } else if (data.type === 'sources') {
             aiSources = data.content || [];
             // Kaynak butonu ekle
-            renderSources(aiBubble, aiSources);
+            renderSources(aiBubble, aiSources, aiText);
+            // Linkleri aktifleştirmek için metni tekrar formatla
+            bubbleText.innerHTML = formatMessageContent(aiText, aiSources);
 
           } else if (data.type === 'done') {
             // Konuşmayı kaydet
             addMessageToConv(activeConvId, 'ai', aiText, aiSources);
+            // Metin tamamen bittikten sonra kaynakları TEKRAR renderla (Başlıkların çıkması için)
+            if (aiSources && aiSources.length > 0) {
+              renderSources(aiBubble, aiSources, aiText);
+            }
             // Like/Dislike ekle
             renderActions(aiBubble);
             if (window.lucide) lucide.createIcons();
+            // Bildirim ekle (süreyle birlikte)
+            const _elapsed = ((Date.now() - _reqStart) / 1000).toFixed(1);
+            const _activeConv = conversations.find(c => c.id === activeConvId);
+            addNotification(_activeConv ? _activeConv.title : 'Sohbet', _elapsed);
 
           } else if (data.type === 'error') {
             bubbleText.textContent = `${t('error')}: ${data.content}`;
@@ -478,18 +569,48 @@ async function sendMessage(text) {
 /* ════════════════════════════════════════════
    BALON / UI HELPERS
 ════════════════════════════════════════════ */
+function formatMessageContent(content, sources) {
+  if (!content) return '';
+  // XSS koruması
+  let html = escHtml(content);
+
+  // Markdown Bold (**text**) ve İtalik (*text*)
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/(?<!\w)\*(.*?)\*(?!\w)/g, '<em>$1</em>');
+  
+  // Satır atlamaları
+  html = html.replace(/\n/g, '<br>');
+
+  // [Source X, Page Y] yakalama ve linke çevirme (Çoklu kaynaklar ve yuvarlak parantezler dahil)
+  if (sources && sources.length > 0) {
+    html = html.replace(/([\[\(])(.*?[sS]ource.*?)([\]\)])/g, (match, openBracket, innerText, closeBracket) => {
+      let modifiedInner = innerText.replace(/Source\s+(\d+)(?:,\s*Page\s+([\w\d]+))?/gi, (srcMatch, idxStr) => {
+        const idx = parseInt(idxStr, 10) - 1;
+        if (idx >= 0 && idx < sources.length) {
+          const src = sources[idx];
+          const url = src.url || '#';
+          return `<a href="${url}" target="_blank" class="inline-citation" title="${escHtml(src.name || '')}">${srcMatch}</a>`;
+        }
+        return srcMatch;
+      });
+      return `${openBracket}${modifiedInner}${closeBracket}`;
+    });
+  }
+  return html;
+}
+
 function appendMessageBubble(role, content, sources) {
   const div = document.createElement('div');
   div.className = `msg msg-${role}`;
 
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
-  bubble.textContent = content;
+  bubble.innerHTML = formatMessageContent(content, sources);
   div.appendChild(bubble);
 
   // AI mesajına aksiyonlar (like/dislike) + kaynaklar sonradan eklenir
   if (role === 'ai' && sources && sources.length > 0) {
-    renderSources(div, sources);
+    renderSources(div, sources, content);
   }
   if (role === 'ai' && content) {
     renderActions(div);
@@ -536,53 +657,88 @@ function makeActionBtn(icon, label) {
   return btn;
 }
 
-function renderSources(parentEl, sources) {
+function renderSources(parentEl, sources, aiText = "") {
   if (!sources || sources.length === 0) return;
   parentEl.querySelectorAll('.msg-sources').forEach(el => el.remove());
+
+  // Hangi kaynakların metinde geçtiğini bul
+  const citedIndices = new Set();
+  if (aiText) {
+    const bracketRegex = /([\[\(])(.*?)([\]\)])/g;
+    let bMatch;
+    while ((bMatch = bracketRegex.exec(aiText)) !== null) {
+      const innerText = bMatch[2];
+      const sourceRegex = /Source\s+(\d+)/gi;
+      let sMatch;
+      while ((sMatch = sourceRegex.exec(innerText)) !== null) {
+        const idx = parseInt(sMatch[1], 10) - 1;
+        if (idx >= 0 && idx < sources.length) citedIndices.add(idx);
+      }
+    }
+  }
+
+  const usedSources = [];
+  const unusedSources = [];
+  sources.forEach((src, idx) => {
+    // Model hiç kaynak göstermemişse veya kaynağı göstermişse "used" listesine al
+    if (citedIndices.size === 0 || citedIndices.has(idx)) {
+      usedSources.push({ ...src, originalIdx: idx });
+    } else {
+      unusedSources.push({ ...src, originalIdx: idx });
+    }
+  });
 
   const wrap = document.createElement('div');
   wrap.className = 'msg-sources';
 
-  const count = sources.length;
   const toggle = document.createElement('button');
   toggle.className = 'sources-toggle';
-  toggle.innerHTML = `<i data-lucide="book-open"></i> ${count} kaynak`;
+  toggle.innerHTML = `<i data-lucide="book-open"></i> ${sources.length} ${t('sources_label')}`;
 
   const list = document.createElement('div');
   list.className = 'sources-list';
 
-  sources.forEach(src => {
-    const item = document.createElement('div');
-    item.className = 'source-item';
-
-    // Yapılandırılmış (nesne) veya eski (string) formatı destekle
-    if (typeof src === 'object' && src.url) {
-      const link = document.createElement('a');
-      link.href = src.url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.className = 'source-link';
-      link.innerHTML = `<i data-lucide="file-text"></i> ${escHtml(src.name)} <span class="source-page">s.${src.page}</span> <i data-lucide="external-link" class="source-ext-icon"></i>`;
-      item.appendChild(link);
-    } else {
-      item.textContent = '• ' + (typeof src === 'string' ? src : src.name);
+  function renderList(srcArr, titleKey) {
+    if (srcArr.length === 0) return;
+    
+    // Eğer ayrım varsa başlık ekle
+    if (citedIndices.size > 0 && unusedSources.length > 0) {
+      const titleEl = document.createElement('div');
+      titleEl.className = 'source-section-title';
+      titleEl.style.cssText = 'font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin: 8px 0 4px 0; text-transform: uppercase; letter-spacing: 0.5px;';
+      titleEl.innerHTML = t(titleKey);
+      list.appendChild(titleEl);
     }
 
-    list.appendChild(item);
-  });
+    srcArr.forEach(src => {
+      const item = document.createElement('div');
+      item.className = 'source-item';
+      const num = `<span class="source-num">${src.originalIdx + 1}.</span> `;
+      
+      if (typeof src === 'string') {
+        item.innerHTML = num + escHtml(src);
+      } else if (src && typeof src === 'object') {
+        item.innerHTML = `${num}<a href="${src.url || '#'}" target="_blank" style="color: inherit; text-decoration: underline;">${escHtml(src.name || t('unknown_source'))} (${t('page')} ${src.page || '?'})</a>`;
+      }
+      
+      list.appendChild(item);
+    });
+  }
+
+  renderList(usedSources, 'sources_used');
+  renderList(unusedSources, 'sources_additional');
 
   toggle.addEventListener('click', () => {
     list.classList.toggle('open');
     toggle.innerHTML = list.classList.contains('open')
-      ? `<i data-lucide="book-open"></i> Kaynakları gizle`
-      : `<i data-lucide="book-open"></i> ${count} kaynak`;
+      ? `<i data-lucide="book-open"></i> ${t('sources_hide')}`
+      : `<i data-lucide="book-open"></i> ${sources.length} ${t('sources_label')}`;
     if (window.lucide) lucide.createIcons();
   });
 
   wrap.appendChild(toggle);
   wrap.appendChild(list);
   parentEl.appendChild(wrap);
-  if (window.lucide) lucide.createIcons();
 }
 
 function appendTypingIndicator() {
@@ -646,7 +802,9 @@ newChatBtn.addEventListener('click', () => {
 ════════════════════════════════════════════ */
 function autoResize(el) {
   el.style.height = 'auto';
-  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  let sh = el.scrollHeight;
+  if (sh === 0) sh = 24; // Element gizliyken scrollHeight 0 döner, çökmesini engelle
+  el.style.height = Math.min(sh, 160) + 'px';
 }
 
 function scrollToBottom() {
@@ -669,11 +827,12 @@ function getRelativeTime(ts) {
   const mins = Math.floor(diff / 60000);
   const hrs  = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
-  if (mins < 1)   return 'şimdi';
-  if (mins < 60)  return `${mins}dk`;
-  if (hrs  < 24)  return `${hrs}sa`;
-  if (days < 7)   return `${days}g`;
-  return new Date(ts).toLocaleDateString('tr-TR', { day:'numeric', month:'short' });
+  const locale = currentLang === 'en' ? 'en-US' : 'tr-TR';
+  if (mins < 1)   return t('time_now');
+  if (mins < 60)  return `${mins}${t('time_min')}`;
+  if (hrs  < 24)  return `${hrs}${t('time_hr')}`;
+  if (days < 7)   return `${days}${t('time_day')}`;
+  return new Date(ts).toLocaleDateString(locale, { day:'numeric', month:'short' });
 }
 
 /* ════════════════════════════════════════════
@@ -694,6 +853,31 @@ if (localStorage.getItem('charm_dark') === '1') {
 
 // Sayfa yüklendiğinde welcome input'a odaklan
 welcomeInput.focus();
+
+// Önemli Notlar Accordion
+const notesToggle = document.getElementById('notes-toggle');
+const notesContent = document.getElementById('notes-content');
+if (notesToggle && notesContent) {
+  notesToggle.addEventListener('click', () => {
+    if (notesContent.hasAttribute('hidden')) {
+      notesContent.removeAttribute('hidden');
+      notesToggle.classList.add('open');
+    } else {
+      notesContent.setAttribute('hidden', '');
+      notesToggle.classList.remove('open');
+    }
+  });
+}
+
+// "Buraya tıklayın" linkiyle veritabanını aç
+const noteDbLink = document.getElementById('note-db-link');
+if (noteDbLink) {
+  noteDbLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const dbBtn = document.getElementById('db-btn');
+    if (dbBtn) dbBtn.click();
+  });
+}
 
 /* ════════════════════════════════════════════
    AYARLAR MODALI
@@ -808,7 +992,61 @@ function toggleDropdown(panel) {
 
 notifBtn.addEventListener('click', e => {
   e.stopPropagation();
+  const wasHidden = notifPanel.hasAttribute('hidden');
   toggleDropdown(notifPanel);
+  if (wasHidden) {
+    // Panel açıldı: içeriği render et, badge temizle
+    renderNotifications();
+    document.getElementById('notif-dot').style.display = 'none';
+  }
+});
+
+/* ════════════════════════════════════════════
+   BİLDİRİM SİSTEMİ
+════════════════════════════════════════════ */
+let _notifItems = [];
+
+function addNotification(convTitle, elapsedSec) {
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  _notifItems.unshift({ title: convTitle, time, elapsed: elapsedSec });
+  // Badge göster
+  document.getElementById('notif-dot').style.display = '';
+}
+
+function renderNotifications() {
+  const list     = document.getElementById('notif-list');
+  const empty    = document.getElementById('notif-empty');
+  const clearBtn = document.getElementById('notif-clear-btn');
+  if (!list) return;
+
+  list.innerHTML = '';
+  if (_notifItems.length === 0) {
+    empty.removeAttribute('hidden');
+    clearBtn.setAttribute('hidden', '');
+    return;
+  }
+  empty.setAttribute('hidden', '');
+  clearBtn.removeAttribute('hidden');
+
+  _notifItems.forEach(n => {
+    const li = document.createElement('li');
+    li.className = 'notif-item';
+    li.innerHTML = `
+      <i data-lucide="check-circle" class="notif-item-icon"></i>
+      <div class="notif-item-body">
+        <span class="notif-item-title">Response ready <span class="notif-elapsed">${n.elapsed}s</span></span>
+        <span class="notif-item-sub">${escHtml(n.title)} · ${n.time}</span>
+      </div>`;
+    list.appendChild(li);
+  });
+  if (window.lucide) lucide.createIcons();
+}
+
+document.getElementById('notif-clear-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  _notifItems = [];
+  document.getElementById('notif-dot').style.display = 'none';
+  renderNotifications();
 });
 
 avatarBtn.addEventListener('click', e => {
@@ -1055,6 +1293,8 @@ const dbClose    = document.getElementById('db-close');
 const dropZone   = document.getElementById('drop-zone');
 const fileInput  = document.getElementById('file-input');
 const filePickBtn= document.getElementById('file-pick-btn');
+const urlInput   = document.getElementById('url-input');
+const urlUploadBtn= document.getElementById('url-upload-btn');
 const docSearch  = document.getElementById('doc-search');
 const docList    = document.getElementById('doc-list');
 const docPagination = document.getElementById('doc-pagination');
@@ -1107,6 +1347,40 @@ dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
   if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files);
+});
+
+// URL Yükleme
+urlUploadBtn.addEventListener('click', async () => {
+  const url = urlInput.value.trim();
+  if (!url) return;
+  
+  // Arayüzü yükleniyor moduna al
+  ingestProgress.removeAttribute('hidden');
+  progressLabel.textContent = t('processing');
+  progressCount.textContent = '';
+  progressBar.style.width   = '50%';
+  progressFile.textContent  = 'Downloading PDF...';
+  
+  try {
+    const resp = await fetch('/api/upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await resp.json();
+    
+    if (resp.ok) {
+      urlInput.value = '';
+      pollIngestStatus(); // Polling döngüsünü başlat
+    } else {
+      alert(data.error || t('upload_failed'));
+      ingestProgress.setAttribute('hidden', 'true');
+    }
+  } catch (err) {
+    console.error(err);
+    alert(t('upload_failed'));
+    ingestProgress.setAttribute('hidden', 'true');
+  }
 });
 
 // ── Dosya yükleme ─────────────────────────────
@@ -1179,7 +1453,18 @@ async function checkIngestStatus() {
       if (s.total === 0) {
         progressCount.textContent = t('models_preparing');
       } else {
-        progressCount.textContent = `${s.current} / ${s.total}`;
+        const fileLbl = t('file_label');
+        const chunkLbl = t('chunk_label');
+        
+        if (s.total_chunks > 0) {
+          progressCount.textContent = `${fileLbl}: ${s.current}/${s.total} | ${chunkLbl}: ${s.current_chunk}/${s.total_chunks}`;
+          // Çubuğun genişliğini parçalanma yüzdesine göre ayarla
+          const pct = Math.round((s.current_chunk / s.total_chunks) * 100);
+          progressBar.style.width = pct + '%';
+        } else {
+          progressCount.textContent = `${fileLbl}: ${s.current}/${s.total} | ...`;
+          progressBar.style.width = '10%';
+        }
       }
       
       progressFile.textContent  = s.current_file || '';
@@ -1224,7 +1509,35 @@ async function loadDocuments(page = 1, query = '') {
       data.docs.forEach(name => {
         const li = document.createElement('li');
         li.className = 'doc-item';
-        li.innerHTML = `<i data-lucide="file-text"></i><span class="doc-item-name" title="${escHtml(name)}">${escHtml(name)}</span>`;
+        li.innerHTML = `
+          <i data-lucide="file-text"></i>
+          <a class="doc-item-name" href="/api/serve-doc/${encodeURIComponent(name)}" target="_blank" title="${escHtml(name)}">${escHtml(name)}</a>
+          <button class="doc-delete-btn" title="${t('delete_doc_btn')}" aria-label="${t('delete_doc_title')}" data-name="${escHtml(name)}">
+            <i data-lucide="x"></i>
+          </button>`;
+
+        // Silme butonu tıklama
+        li.querySelector('.doc-delete-btn').addEventListener('click', e => {
+          e.stopPropagation();
+          openConfirm(
+            t('delete_doc_title'),
+            `"${name}" — ${t('delete_doc_confirm')}`,
+            async () => {
+              try {
+                const r = await fetch(`/api/documents/${encodeURIComponent(name)}`, { method: 'DELETE' });
+                const j = await r.json();
+                if (j.ok) {
+                  loadDocuments(_docPage, docSearch.value);
+                } else {
+                  alert(t('delete_doc_error') + ' ' + (j.error || '?'));
+                }
+              } catch (err) {
+                alert(t('delete_doc_conn_error'));
+              }
+            }
+          );
+        });
+
         docList.appendChild(li);
       });
       if (window.lucide) lucide.createIcons();
@@ -1373,3 +1686,143 @@ function renderArchiveList() {
     archiveList.appendChild(li);
   });
 }
+
+/* ════════════════════════════════════════════
+   RAG CONFIG PANELİ
+════════════════════════════════════════════ */
+const ragConfigBtn   = document.getElementById('rag-config-btn');
+const ragConfigPanel = document.getElementById('rag-config-panel');
+const ragConfigClose = document.getElementById('rag-config-close');
+
+// Panel aç/kapat
+ragConfigBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  const isHidden = ragConfigPanel.hasAttribute('hidden');
+  if (isHidden) {
+    ragConfigPanel.removeAttribute('hidden');
+    if (window.lucide) lucide.createIcons();
+    loadRagConfig();
+  } else {
+    ragConfigPanel.setAttribute('hidden', '');
+  }
+});
+
+ragConfigClose.addEventListener('click', () => {
+  ragConfigPanel.setAttribute('hidden', '');
+});
+
+// Panelin dışına tıklayınca kapat
+document.addEventListener('click', e => {
+  if (!ragConfigPanel.hasAttribute('hidden') &&
+      !ragConfigPanel.contains(e.target) &&
+      !ragConfigBtn.contains(e.target)) {  // içindeki <i> ikonuna da tıklanabilsin
+    ragConfigPanel.setAttribute('hidden', '');
+  }
+});
+
+// Config yükle
+async function loadRagConfig() {
+  try {
+    const resp = await fetch('/api/rag-config');
+    const cfg  = await resp.json();
+
+    if (!cfg.use_reranker) {
+      document.getElementById('cfg-reranker-model').value = 'none';
+    } else {
+      document.getElementById('cfg-reranker-model').value = cfg.reranker_model || 'BAAI/bge-reranker-v2-m3';
+    }
+    
+    function updateThresholdUI(isReranker, forceReset = false) {
+      const thr = document.getElementById('cfg-threshold');
+      const thrVal = document.getElementById('cfg-threshold-val');
+      if (isReranker) {
+        thr.min = -10; thr.max = 5; thr.step = 0.5;
+        if (forceReset || parseFloat(thr.value) > 5 || parseFloat(thr.value) < -10) thr.value = -2.0;
+      } else {
+        thr.min = 0; thr.max = 1; thr.step = 0.05;
+        if (forceReset || parseFloat(thr.value) < 0 || parseFloat(thr.value) > 1) thr.value = 0.50;
+      }
+      thrVal.textContent = Number.isInteger(parseFloat(thr.value)) ? parseFloat(thr.value).toFixed(1) : parseFloat(thr.value).toFixed(2);
+    }
+    
+    window._updateThresholdUI = updateThresholdUI;
+    updateThresholdUI(cfg.use_reranker, false);
+    const initK = document.getElementById('cfg-initial-k');
+    initK.value = cfg.initial_top_k;
+    document.getElementById('cfg-initial-k-val').textContent = cfg.initial_top_k;
+
+    const topK = document.getElementById('cfg-top-k');
+    topK.value = cfg.top_k;
+    document.getElementById('cfg-top-k-val').textContent = cfg.top_k;
+
+    const temp = document.getElementById('cfg-temp');
+    temp.value = cfg.temperature;
+    document.getElementById('cfg-temp-val').textContent = parseFloat(cfg.temperature).toFixed(1);
+
+    const thr = document.getElementById('cfg-threshold');
+    thr.value = cfg.score_threshold;
+    window._updateThresholdUI(cfg.use_reranker, false);
+  } catch (e) {
+    showCfgStatus('Yüklenemedi', true);
+  }
+}
+
+// Config kaydet (debounced)
+let _cfgSaveTimer = null;
+function scheduleConfigSave() {
+  clearTimeout(_cfgSaveTimer);
+  _cfgSaveTimer = setTimeout(saveRagConfig, 600);
+}
+
+async function saveRagConfig() {
+  const selectedModel = document.getElementById('cfg-reranker-model').value;
+  const payload = {
+    use_reranker:    selectedModel !== 'none',
+    reranker_model:  selectedModel !== 'none' ? selectedModel : undefined,
+    initial_top_k:  parseInt(document.getElementById('cfg-initial-k').value),
+    top_k:          parseInt(document.getElementById('cfg-top-k').value),
+    temperature:    parseFloat(document.getElementById('cfg-temp').value),
+    score_threshold: parseFloat(document.getElementById('cfg-threshold').value),
+  };
+  try {
+    const resp = await fetch('/api/rag-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (resp.ok) showCfgStatus('✓ Kaydedildi');
+    else         showCfgStatus('Kayıt hatası', true);
+  } catch {
+    showCfgStatus('Bağlantı hatası', true);
+  }
+}
+
+function showCfgStatus(msg, isError = false) {
+  const el = document.getElementById('cfg-status');
+  el.textContent = msg;
+  el.style.color = isError ? '#E53935' : '#4CAF50';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.textContent = ''; }, 2500);
+}
+
+// Slider live update + save
+['cfg-initial-k', 'cfg-top-k', 'cfg-temp', 'cfg-threshold'].forEach(id => {
+  const slider = document.getElementById(id);
+  const valMap = {
+    'cfg-initial-k': 'cfg-initial-k-val',
+    'cfg-top-k':     'cfg-top-k-val',
+    'cfg-temp':      'cfg-temp-val',
+    'cfg-threshold': 'cfg-threshold-val',
+  };
+  slider.addEventListener('input', () => {
+    const raw = parseFloat(slider.value);
+    const formatted = Number.isInteger(raw) ? raw : raw.toFixed(1);
+    document.getElementById(valMap[id]).textContent = formatted;
+    scheduleConfigSave();
+  });
+});
+
+document.getElementById('cfg-reranker-model').addEventListener('change', (e) => {
+  if (window._updateThresholdUI) window._updateThresholdUI(e.target.value !== 'none', true);
+  scheduleConfigSave();
+});
