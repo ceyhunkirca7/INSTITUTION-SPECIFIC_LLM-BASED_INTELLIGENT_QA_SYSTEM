@@ -4,6 +4,8 @@ This repository contains an **Advanced Retrieval-Augmented Generation (RAG)** pi
 
 The system leverages **BAAI/bge-m3** for dense multilingual embeddings, **ChromaDB** with HNSW indexing for rapid semantic search, Cross-Encoder models (e.g., **BAAI/bge-reranker-v2-m3**) for high-precision reranking, and the **Llama 3.1 8B / Llama 3.3 70B** models (via Groq API) for high-speed, zero-hallucination text generation.
 
+demo presentation video link: https://www.youtube.com/watch?v=ZNL_4c0UVZw
+
 ## 🚀 Features
 - **Interactive Web UI:** A sleek, dynamic Flask-based web interface to manage documents, toggle models, and chat with the AI seamlessly.
 - **Advanced Document Processing:** Automatic chunking and cleaning of `.pdf`, `.docx`, and even legacy `.doc` files (powered by **Apache Tika** for bulletproof parsing).
